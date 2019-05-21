@@ -1,2 +1,0 @@
-# BaulkoDrc
-yay!

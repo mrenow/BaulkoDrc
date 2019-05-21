@@ -34,7 +34,9 @@ def set_target(channel, target):
     maestro.write(bytes(command, 'latin-1'))
 
 
-set_target(drive_channel, 6000)
-set_target(steer_channel, 6000)
+if __name__ == "__main__":
+
+    set_target(drive_channel, 6000)
+    set_target(steer_channel, 6000)
 
 

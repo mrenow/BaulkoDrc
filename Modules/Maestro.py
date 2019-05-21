@@ -60,10 +60,19 @@ class Channel:
         return self.max
 
 
+steer = Channel(0)
+speed = Channel(1)
+
+steer.set_range(3000, 9000)
+speed.set_range(3000, 9000)
+
+steer.set_speed(10)
+steer.set_accel(10)
+
 def drive(drive_desu, steer_desu):
     global previous_speed
 
-    steer.set_target(int(interp(steer_desu, [-100, 100], [steer.min, steer.max])))
+    steer.set_target(-int(interp(steer_desu, [-100, 100], [steer.min, steer.max])))
 
     if drive_desu < 0 and previous_speed > 0:
         speed.set_target(5999)
@@ -76,29 +85,29 @@ def drive(drive_desu, steer_desu):
 
     previous_speed = drive_desu
 
+def clear():
+    drive(0,0)
 
 def stop():
     #speed.set_speed(50)
     #speed.set_accel(10)
-    speed.set_target(6000)
+    speed.set_target(3000)
     #time.sleep(1)
     #speed.set_speed(0)
     #speed.set_accel(0)
+    time.sleep(0.1)
+    clear()
 
 
 if __name__ == "__main__":
 
-    steer = Channel(0)
-    speed = Channel(1)
 
-    steer.set_range(3000, 9000)
-    speed.set_range(3000, 9000)
 
     #steer.set_target(7000)
     #speed.set_target(5000)
-    steer.set_speed(10)
-    steer.set_accel(10)
 
     drive(20, 40)
     time.sleep(2)
     stop()
+
+    speed.set_target(6000)

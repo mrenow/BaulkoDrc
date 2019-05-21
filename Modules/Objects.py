@@ -20,7 +20,7 @@ def toMask(image:np.ndarray, lower, upper, format = cv.COLOR_BGR2HSV, noise = 5,
     image = cv.cvtColor(image, format)
     image = cv.inRange(image, lower, upper)
 
-
+    # Kernel shape accounts for how perspective squishes objects.
     image = cv.morphologyEx(image, cv.MORPH_OPEN, np.ones((noise,noise//2)))
 
     image = cv.morphologyEx(image, cv.MORPH_CLOSE,np.ones((8*noise,4*noise)))
@@ -34,12 +34,10 @@ def toMask(image:np.ndarray, lower, upper, format = cv.COLOR_BGR2HSV, noise = 5,
 # Uses canny and contour detection to only return large onscreen objects.
 # Issues: Usually returns duplicates of objects. Can fix by using a Open-only gradient operation,
 # but this becomes unreliable in yellow line detection.
-def findObjects(image:np.ndarray, threshlow, minwidth, minheight = None, frame = None, debug = False) -> list:
+def findObjects(image:np.ndarray, threshlow, minwidth, minheight = None, frame = None, debug = None) -> list:
 
-    drawing = np.zeros(image.shape)
-    if(debug):
+    if(not debug is None):
         cv.namedWindow("findObjects")
-        drawing = frame.copy()
 
     if(not minheight):
         minheight = minwidth
@@ -53,7 +51,7 @@ def findObjects(image:np.ndarray, threshlow, minwidth, minheight = None, frame =
     edges = cv.morphologyEx(borderedimage, cv.MORPH_GRADIENT, np.ones((2,2)))
     contours, _ = cv.findContours(edges, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
-    if (debug): cv.drawContours(drawing,contours,-1,(255,0,0))
+    if (not debug is None): cv.drawContours(debug,contours,-1,(255,0,0))
 
     # List of tuples : (x,y,rx,ry)
     objects = []
@@ -74,9 +72,7 @@ def findObjects(image:np.ndarray, threshlow, minwidth, minheight = None, frame =
         if(width >= minwidth and height >= minheight):
             objects.append((x,y,width//2,height//2))
 
-            if(debug): cv.rectangle(drawing, (box[0], box[1]), (box[0]+box[2], box[1]+box[3]), (0, 0, 255))
-
-    if (debug): cv.imshow("findObjects", drawing)
+            if(not debug is None): cv.rectangle(debug, (box[0], box[1]), (box[0]+box[2], box[1]+box[3]), (0, 0, 255))
 
     return objects
 
@@ -137,22 +133,25 @@ redupper = (15,255,255)
 
 # Returns the centres and dimensions of all objects in a dictionary
 def getObjects(frame):
+    detection = frame.copy()
     purplechannel = toMask(frame, purplelower,purpleupper,noise = 40, debug = False)
-    obstacles = findObjects(purplechannel,60,60,frame = frame, debug = False)
+    obstacles = findObjects(purplechannel,60,60,frame = frame, debug = detection)
 
-    bluechannel = toMask(frame, bluelower, blueupper, noise = 5, debug = False)
-    blueline = findObjects(bluechannel, 10, 100, 20, frame = frame, debug = False)
+    bluechannel = toMask(frame, bluelower, blueupper, noise = 5, debug = True)
+    blueline = findObjects(bluechannel, 10, 100, 20, frame = frame, debug = detection)
 
     yellowchannel = toMask(frame, yellowlower, yellowupper, noise = 5, debug = False)
-    yellowline = findObjects(yellowchannel, 10, 100, 20, frame = frame, debug = False)
+    yellowline = findObjects(yellowchannel, 10, 100, 20, frame = frame, debug = detection)
 
     redchannel = toMask(frame, redlower,redupper, noise = 20, debug = False)
-    cars = findObjects(redchannel, 10, 20, 20, frame = frame, debug = False)
-
+    cars = findObjects(redchannel, 10, 20, 20, frame = frame, debug = detection)
+    if(not detection is None):
+        cv.imshow("findObjects",detection)
     return dict(yellowline = yellowline, blueline = blueline, obstacles = obstacles, cars = cars)
 
 if __name__ == "__main__":
-    name = "../testdata/RedCarTest1.avi"
+    name = "../testdata/TrackTest2.avi"
+    #name = "1"
     imgdata:cv.VideoCapture = _testInput(name)
     cv.waitKey(1)
     while(imgdata.isOpened()):
