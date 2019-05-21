@@ -4,12 +4,9 @@ import cv2 as cv
 
 '''
 Contains getObjects()
-
 Input is raw image data
-
 Output is a tuple of centre and radii in x and y directions.
 Should be sufficient for Daniel Pathing. 
-
 '''
 #Maybe use an adpativeish thresh?
 def toMask(image:np.ndarray, lower, upper, format = cv.COLOR_BGR2HSV, noise = 5, debug = False):
@@ -92,14 +89,11 @@ def getLine(image:np.ndarray, thresh = 128, noise = 3, debug = False):
     # Threshold
    # image = cv.adaptiveThreshold(image, maxValue = 255,adaptiveMethod = cv.ADAPTIVE_THRESH_GAUSSIAN_C, thresholdType=cv.THRESH_BINARY,blockSize=33,C=1.5)
     # Noise removal
-
     if(debug):
         cv.imshow("debug2",image)
         print("getLine->thresh")
-
     image = cv.morphologyEx(image, cv.MORPH_CLOSE,np.ones((noise,noise//3)))
     image = cv.morphologyEx(image, cv.MORPH_OPEN, np.ones((noise,noise//3)))
-
     if(debug):
         cv.imshow("debug3",cv.Canny(image,128,256))
         print("getLine->image")
@@ -151,7 +145,7 @@ def getObjects(frame):
 
 if __name__ == "__main__":
     name = "../testdata/TrackTest2.avi"
-    #name = "1"
+    name = "0"
     imgdata:cv.VideoCapture = _testInput(name)
     cv.waitKey(1)
     while(imgdata.isOpened()):
@@ -165,13 +159,5 @@ if __name__ == "__main__":
         for key in obs.keys():
             if(obs[key]):
                 print(key,":",obs[key])
-
-
-
-
-
-
-
-
 
 
