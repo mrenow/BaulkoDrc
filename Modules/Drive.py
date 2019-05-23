@@ -9,11 +9,18 @@ resolution = (1280,480)
 
 #gets x co ordinate of screen target
 def getScreenTarget(objects:dict):
-    objects = sorted(sum(([i[0] for i in o] for o in objects.values() if o), [0,resolution[0]]))
+    allobjects = []
+
+    if(not objects["blueline"]):
+        allobjects.append(0)
+    if(not objects["yellowline"]):
+        allobjects.append(resolution[0])
+
+    allobjects = sum(([i[0] for i in o] for o in objects.values() if o), allobjects)
     # gap, location
     maxgap = (0,0)
-    print("bounds: ",objects)
-    for o1,o2 in zip(objects[1:],objects[:-1]):
+    print("bounds: ",allobjects)
+    for o1,o2 in zip(allobjects[1:],allobjects[:-1]):
         gap = o1-o2
         if(gap > maxgap[0]-maxgap[1]):
             maxgap = (o1,o2)
