@@ -2,9 +2,13 @@ import serial
 from numpy import interp
 import time
 
-maestro = serial.Serial(port='/dev/ttyACM0')
+maestro = serial.Serial(port='COM17')
+#/dev/ttyACM0
 
 previous_speed = 1
+
+HIGH = 7000
+LOW = 5000
 
 
 def open_maestro():
@@ -88,17 +92,31 @@ def stop():
 def clear():
     drive(0,0)
 
+def led(nyan):
+    led_output.set_target(nyan)
+
+
 steer = Channel(0)
 speed = Channel(1)
+led_output = Channel(2)
 
-steer.set_range(3000, 9000)
+steer.set_range(4200, 7800)
 speed.set_range(3000, 9000)
+led_output.set_range(5000, 7000)
 
 steer.set_speed(10)
 steer.set_accel(10)
 
 if __name__ == "__main__":
+    #clear()
+    #time.sleep(5)
 
-    drive(20, 40)
-    time.sleep(2)
-    stop()
+    for x in range(10, 30):
+        led(HIGH)
+        time.sleep(1.5)
+        led(LOW)
+        drive(x, 0)
+        time.sleep(2)
+        drive(0, 0)
+        time.sleep(2)
+        x += 1
