@@ -100,7 +100,7 @@ steer = Channel(0)
 speed = Channel(1)
 led_output = Channel(2)
 
-steer.set_range(3000, 9000)
+steer.set_range(4200, 7800)
 speed.set_range(4000, 8000)
 
 steer.set_speed(10)
