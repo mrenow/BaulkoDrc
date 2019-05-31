@@ -27,6 +27,27 @@ def toMask(image:np.ndarray, lower, upper, format = cv.COLOR_BGR2HSV, noise = 5,
 
     return image
 
+class ObjectDetector:
+    def __init__(self, resolution):
+        self.blue = np.zeros(shape = resolution, dtype = np.uint8)
+        self.yellow = np.zeros(shape = resolution, dtype = np.uint8)
+        self.red = np.zeros(shape = resolution, dtype = np.uint8)
+        self.purple = np.zeros(shape = resolution, dtype = np.uint8)
+
+
+    def update(self, frame):
+        detection = frame.copy()
+        self.purple = toMask(frame, purplelower,purpleupper,noise = 40, debug = False)
+
+        self.blue = toMask(frame, bluelower, blueupper, noise = 5, debug = True)
+
+        self.yellow = toMask(frame, yellowlower, yellowupper, noise = 5, debug = False)
+
+        self.red = toMask(frame, redlower,redupper, noise = 20, debug = False)
+
+
+
+
 # Assumes noiseless
 # Uses canny and contour detection to only return large onscreen objects.
 # Issues: Usually returns duplicates of objects. Can fix by using a Open-only gradient operation,
@@ -115,21 +136,30 @@ def _testInput(name ='0'):
         # Returns an object that
         return type('',(),dict(img = img, read = lambda self: (True,self.img),isOpened = lambda self:True,open = lambda:None))()
 
-bluelower = (58,100,0)
-blueupper = (118,255,255)
-yellowlower = (15,66,66)
-yellowupper = (66,200,255)
+
+bluelower = (58,76,10)
+blueupper = (157,255,181)
+yellowlower = (12,143,82)
+yellowupper = (32,255,175)
 purplelower = (150,20,20)
 purpleupper = (200,200,200)
 redlower = (0,100,0)
 redupper = (15,255,255)
 
 
+OBSTACLE_DEPTH = 10
+def correctObstacleSize(obstacles):
+    newObstacles = []
+    for o in obstacles:
+        newObstacles.append(((o[0]),o[1]+o[3],o[2],OBSTACLE_DEPTH/2))
+    return newObstacles
+
 # Returns the centres and dimensions of all objects in a dictionary
 def getObjects(frame):
     detection = frame.copy()
     purplechannel = toMask(frame, purplelower,purpleupper,noise = 40, debug = False)
     obstacles = findObjects(purplechannel,60,60,frame = frame, debug = detection)
+    obstacles = correctObstacleSize(obstacles)
 
     bluechannel = toMask(frame, bluelower, blueupper, noise = 5, debug = True)
     blueline = findObjects(bluechannel, 10, 100, 20, frame = frame, debug = detection)
@@ -143,9 +173,11 @@ def getObjects(frame):
         cv.imshow("findObjects",detection)
     return dict(yellowline = yellowline, blueline = blueline, obstacles = obstacles, cars = cars)
 
+
+
 if __name__ == "__main__":
     name = "../testdata/TrackTest2.avi"
-    name = "0"
+    #name = "1"
     imgdata:cv.VideoCapture = _testInput(name)
     cv.waitKey(1)
     while(imgdata.isOpened()):
