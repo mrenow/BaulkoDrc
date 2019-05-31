@@ -101,22 +101,21 @@ speed = Channel(1)
 led_output = Channel(2)
 
 steer.set_range(4200, 7800)
-speed.set_range(3000, 9000)
-led_output.set_range(5000, 7000)
+speed.set_range(4000, 8000)
 
 steer.set_speed(10)
 steer.set_accel(10)
 
 if __name__ == "__main__":
-    #clear()
-    #time.sleep(5)
+    clear()
+    time.sleep(3)
 
     for x in range(10, 30):
-        led(HIGH)
-        time.sleep(1.5)
-        led(LOW)
+        time.sleep(1)
         drive(x, 0)
         time.sleep(2)
         drive(0, 0)
-        time.sleep(2)
+        time.sleep(1)
         x += 1
+
+#minimum speed at almost full batt is 20
