@@ -18,9 +18,9 @@ def toMask(image:np.ndarray, lower, upper, format = cv.COLOR_BGR2HSV, noise = 5,
     image = cv.inRange(image, lower, upper)
 
     # Kernel shape accounts for how perspective squishes objects.
-    image = cv.morphologyEx(image, cv.MORPH_OPEN, np.ones((noise,noise//2)))
+    image = cv.morphologyEx(image, cv.MORPH_OPEN, np.ones((noise,4*noise)))
 
-    image = cv.morphologyEx(image, cv.MORPH_CLOSE,np.ones((8*noise,4*noise)))
+    image = cv.morphologyEx(image, cv.MORPH_CLOSE,np.ones((18*noise,72*noise)))
     if (debug):
         cv.namedWindow("tomask")
         cv.imshow("tomask", image)
@@ -90,7 +90,9 @@ def findObjects(image:np.ndarray, threshlow, minwidth, minheight = None, frame =
         if(width >= minwidth and height >= minheight):
             objects.append((x,y,width//2,height//2))
 
-            if(not debug is None): cv.rectangle(debug, (box[0], box[1]), (box[0]+box[2], box[1]+box[3]), (0, 0, 255))
+            if(not debug is None):
+                cv.rectangle(debug, (box[0], box[1]), (box[0]+box[2], box[1]+box[3]), (0, 0, 255))
+
 
     return objects
 
@@ -137,10 +139,10 @@ def _testInput(name ='0'):
         return type('',(),dict(img = img, read = lambda self: (True,self.img),isOpened = lambda self:True,open = lambda:None))()
 
 
-bluelower = (58,76,10)
-blueupper = (157,255,181)
-yellowlower = (12,143,82)
-yellowupper = (32,255,175)
+bluelower = (84,66,40)
+blueupper = (129,255,181)
+yellowlower = (18,80,120)
+yellowupper = (32,255,220)
 purplelower = (150,20,20)
 purpleupper = (200,200,200)
 redlower = (0,100,0)
@@ -161,11 +163,11 @@ def getObjects(frame):
     obstacles = findObjects(purplechannel,60,60,frame = frame, debug = detection)
     obstacles = correctObstacleSize(obstacles)
 
-    bluechannel = toMask(frame, bluelower, blueupper, noise = 5, debug = True)
-    blueline = findObjects(bluechannel, 10, 100, 20, frame = frame, debug = detection)
+    bluechannel = toMask(frame, bluelower, blueupper, noise = 1, debug = False)
+    blueline = findObjects(bluechannel, 10, 100, 5, frame = frame, debug = detection)
 
-    yellowchannel = toMask(frame, yellowlower, yellowupper, noise = 5, debug = False)
-    yellowline = findObjects(yellowchannel, 10, 100, 20, frame = frame, debug = detection)
+    yellowchannel = toMask(frame, yellowlower, yellowupper, noise = 1,debug = True)
+    yellowline = findObjects(yellowchannel, 10, 100, 5, frame = frame, debug = detection)
 
     redchannel = toMask(frame, redlower,redupper, noise = 20, debug = False)
     cars = findObjects(redchannel, 10, 20, 20, frame = frame, debug = detection)
@@ -177,7 +179,7 @@ def getObjects(frame):
 
 if __name__ == "__main__":
     name = "../testdata/TrackTest2.avi"
-    #name = "1"
+    name = "0"
     imgdata:cv.VideoCapture = _testInput(name)
     cv.waitKey(1)
     while(imgdata.isOpened()):

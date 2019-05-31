@@ -2,7 +2,7 @@ import serial
 from numpy import interp
 import time
 
-maestro = serial.Serial(port='COM17')
+maestro = serial.Serial(port='/dev/ttyACM0')
 #/dev/ttyACM0
 
 previous_speed = 1
@@ -103,8 +103,8 @@ led_output = Channel(2)
 steer.set_range(4200, 7800)
 speed.set_range(4000, 8000)
 
-steer.set_speed(10)
-steer.set_accel(10)
+steer.set_speed(0)
+steer.set_accel(0)
 
 if __name__ == "__main__":
     clear()
