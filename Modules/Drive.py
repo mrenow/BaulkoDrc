@@ -2,6 +2,7 @@ from BaulkoDrc.Modules.Objects import getObjects
 from BaulkoDrc.Modules.Maestro import *
 import cv2 as cv
 import numpy as np
+import keyboard
 
 # from PSEye
 
@@ -95,4 +96,12 @@ if __name__ ==  "__main__":
         record.write(frame)
         if cv.waitKey(25) & 0xFF == ord(' '):
             record.release()
+            clear()
             break
+
+        if keyboard.is_pressed('w'):
+            MAX_SPEED += 1
+            time.sleep(0.2)
+        if keyboard.is_pressed('s'):
+            MAX_SPEED -= 1
+            time.sleep(0.2)
