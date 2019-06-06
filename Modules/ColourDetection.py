@@ -14,6 +14,16 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cmx
 from mpl_toolkits.mplot3d import Axes3D
 from sklearn.mixture import GaussianMixture
+import functools
+class membership:
+    arr:np.ndarray
+    offset:np.ndarray
+    def __init__(self, means, arr):
+        self.arr = arr
+        self.offset = means
+    def isMember(self, x:np.ndarray):
+        x = x - self.offset
+        return x.dot(self.arr).dot(x) < 1
 
 #Small util
 
@@ -25,11 +35,18 @@ def cvtCode(space1, space2):
     return getattr(cv,ID)
 
 
-#incomplete
-def getEqs(imgdata, centres:dict):
 
-    colorspace = getColorSpace(imgdata)
 
+# Returns unordered membership functions
+def getEqs(eigvec, eigval,means):
+    membershipfuncs = []
+    for i in range(eigvec.shape[0]):
+        arr = eigvec[i].dot(np.diag(np.reciprocal(eigval[i]))).dot(eigvec[i].transpose())
+        print("vec:",eigvec[i])
+        print("diag",np.diag(np.reciprocal(eigval[i])))
+        print("arr",arr)
+        membershipfuncs.append(membership(means[i],arr/4))
+    return membershipfuncs
 
 # prunes as much floor data as possible
 def irrelevantMask(image, thresh = ((0,50,0),(255,255,255))):
@@ -94,13 +111,14 @@ def extract_color_histogram(image, bins=(8, 8, 8)):
     # return the flattened histogram as the feature vector
     return hist.flatten()
 
-def plot3DHist(hist, means, depth = (3,3,3), colorout = "BGR", thresh = 1000):
+def plot3DHist(hist, means, depth = (3,3,3), colorout = "BGR", filterfunc = lambda x,y,z,h:  h > 1000):
 
     bins = (2**depth[0], 2**depth[1], 2**depth[2])
     maxsize = (bins[0]*bins[1]*bins[2])
     xs = np.zeros(maxsize)
     ys = np.zeros(maxsize)
     zs = np.zeros(maxsize)
+    filter = np.zeros(maxsize, dtype = bool)
     colors = np.zeros((maxsize,3),dtype= np.float32)
     hist = hist.flatten()
 
@@ -113,7 +131,8 @@ def plot3DHist(hist, means, depth = (3,3,3), colorout = "BGR", thresh = 1000):
         zs[i] = z
         ys[i] = y
         xs[i] = x
-    filter = hist>thresh
+
+        filter[i] = filterfunc(x,y,z,hist[i])
     xs = xs[filter]
     ys = ys[filter]
     zs = zs[filter]
@@ -126,7 +145,6 @@ def plot3DHist(hist, means, depth = (3,3,3), colorout = "BGR", thresh = 1000):
     print(colors)
     ax1 = plotScatter3D(xs, ys, zs, getColorMap(np.log(1+hist)),bins)
     ax2 = plotScatter3D(xs, ys, zs, colors.astype(np.float32),bins)
-    ax1.set
     ax1.scatter(means[:, 0], means[:, 1], means[:, 2], "k", marker = "^")
     ax2.scatter(means[:, 0], means[:, 1], means[:, 2], "k", marker = "^")
 
@@ -192,12 +210,7 @@ def EMClustering(colors:np.ndarray, nclusters):
     gmm = GaussianMixture(n_components = nclusters)
     gmm.fit(colors)
 
-
-    print("means",gmm.means_)
-    print('\n')
-    print("covar",gmm.covariances_)
     eig = np.linalg.eig(gmm.covariances_)
-    print("eig", eig)
     return gmm.means_,eig
 
 
@@ -207,18 +220,24 @@ def EMClustering(colors:np.ndarray, nclusters):
 if __name__ == "__main__":
     name = "../testdata/TrackTest2.avi"
     colorout = "HSV"
-    depth = (8,5,5)
+    depth = (8,6,6)
     bins = (2**depth[0], 2**depth[1], 2**depth[2])
     hist = getColorSpace(name, bins, "BGR",colorout)
     #points = toPoints(discretize(hist, 100))
     #centres, labels = Kmeans(points, 5)
     #print(labels.shape)
-    pts = toPoints((hist//10000).astype(np.uint32))
+    print(hist.shape)
+    pts = toPoints((np.sqrt(hist)//10).astype(np.uint32))
     print(pts.flatten().sum())
-    means, eig = EMClustering(pts, 4)
+    means, eig = EMClustering(pts, 7)
+    eigval, eigvec = eig
+
 
     plot3DHist(hist, means, depth, colorout)
-
+    membership = getEqs(eigvec,eigval,means)
+    orfunc = lambda x,y: x or y
+    filter = lambda x,y,z,h: functools.reduce(orfunc,[(func.isMember(np.array([x,y,z]))) for func in membership])
+    plot3DHist(hist,means,depth, colorout, filterfunc= filter)
     plt.show()
 
 
