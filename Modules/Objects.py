@@ -180,6 +180,7 @@ def getObjects(frame):
 if __name__ == "__main__":
     name = "../testdata/TrackTest2.avi"
     name = "0"
+
     imgdata:cv.VideoCapture = _testInput(name)
     cv.waitKey(1)
     while(imgdata.isOpened()):

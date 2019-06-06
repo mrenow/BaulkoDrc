@@ -13,6 +13,7 @@ import matplotlib.colors
 import matplotlib.pyplot as plt
 import matplotlib.cm as cmx
 from mpl_toolkits.mplot3d import Axes3D
+from sklearn.mixture import GaussianMixture
 
 #Small util
 
@@ -93,7 +94,7 @@ def extract_color_histogram(image, bins=(8, 8, 8)):
     # return the flattened histogram as the feature vector
     return hist.flatten()
 
-def plot3DHist(hist, depth = (3,3,3), colorout = "BGR", thresh = 1000):
+def plot3DHist(hist, means, depth = (3,3,3), colorout = "BGR", thresh = 1000):
 
     bins = (2**depth[0], 2**depth[1], 2**depth[2])
     maxsize = (bins[0]*bins[1]*bins[2])
@@ -123,8 +124,11 @@ def plot3DHist(hist, depth = (3,3,3), colorout = "BGR", thresh = 1000):
         print(colors)
     colors = np.divide(colors,256)
     print(colors)
-    plotScatter3D(xs, ys, zs, getColorMap(np.log(1+hist)),bins)
-    plotScatter3D(xs, ys, zs, colors.astype(np.float32),bins)
+    ax1 = plotScatter3D(xs, ys, zs, getColorMap(np.log(1+hist)),bins)
+    ax2 = plotScatter3D(xs, ys, zs, colors.astype(np.float32),bins)
+    ax1.set
+    ax1.scatter(means[:, 0], means[:, 1], means[:, 2], "k", marker = "^")
+    ax2.scatter(means[:, 0], means[:, 1], means[:, 2], "k", marker = "^")
 
 
 def getColorMap(cs,colorsMap = 'jet'):
@@ -138,7 +142,7 @@ def plotScatter3D(x,y,z,cmap, scale):
 
     fig: plt.Figure = plt.figure()
     ax = Axes3D(fig)
-    ax.scatter(x, y, z, c=cmap)
+    ax.scatter(x, y, z, c=cmap, marker = ".")
     #cant use because scalar map is in the getColorMap context
     #fig.colorbar(scalarMap)
 
@@ -159,7 +163,7 @@ def discretize(data, bins):
 
 # Create points for each of the indices of an array. Used to convert into a format compatible with the kmeans function
 def toPoints(array3D:np.ndarray) -> np.ndarray:
-    numpoints = array3D.sum() # to do find flatten function
+    numpoints = array3D.flatten().sum()
     points = np.ndarray((numpoints, 3))
     index = 0
     for i in range(array3D.shape[0]):
@@ -184,17 +188,37 @@ def Kmeans(image:np.ndarray, k, ranges:list = (1,1,1)):
     compactness, labels, centres = cv.kmeans(normed_img.astype(np.float32),k, None, criteria = (cv.TERM_CRITERIA_EPS, 100000, 0.01), attempts=1, flags = cv.KMEANS_PP_CENTERS)
     return (centres, labels)
 
+def EMClustering(colors:np.ndarray, nclusters):
+    gmm = GaussianMixture(n_components = nclusters)
+    gmm.fit(colors)
+
+
+    print("means",gmm.means_)
+    print('\n')
+    print("covar",gmm.covariances_)
+    eig = np.linalg.eig(gmm.covariances_)
+    print("eig", eig)
+    return gmm.means_,eig
+
+
+
+    
+
 if __name__ == "__main__":
-    name = "../testdata/TrackTest4.avi"
+    name = "../testdata/TrackTest2.avi"
     colorout = "HSV"
     depth = (8,5,5)
     bins = (2**depth[0], 2**depth[1], 2**depth[2])
     hist = getColorSpace(name, bins, "BGR",colorout)
-    plot3DHist(hist, depth, colorout)
-
     #points = toPoints(discretize(hist, 100))
     #centres, labels = Kmeans(points, 5)
     #print(labels.shape)
+    pts = toPoints((hist//10000).astype(np.uint32))
+    print(pts.flatten().sum())
+    means, eig = EMClustering(pts, 4)
+
+    plot3DHist(hist, means, depth, colorout)
+
     plt.show()
 
 

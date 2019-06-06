@@ -39,7 +39,7 @@ def driveToTarget(targetx):
     turn = max(-100,min(100,turn))
     print("Target: ", targetx)
     speed = interp(1/(turn+1),[1/101,1],[MIN_SPEED,MAX_SPEED])
-    drive(speed,turn)
+    drive(0,turn)
 
 
 
@@ -51,14 +51,30 @@ if __name__ ==  "__main__":
 
     clear()
     time.sleep(5)
-    device = 0
+    device1 = 0
+    device2 = 1
     record = cv.VideoWriter("whee.avi",cv.VideoWriter_fourcc(*'XVID'),25,(640,480))
-    camera = cv.VideoCapture(device)
+
+    # Video setup
+    camera1 = cv.VideoCapture(device1)
+    camera2 = cv.VideoCapture(device2)
+    # 3 is width, 4 is height
+    resolution1 = (int(camera1.get(3)), int(camera1.get(4)))
+    resolution2 = (int(camera2.get(3)), int(camera2.get(4)))
+    assert(resolution1[1] == resolution2[1])
+    frame = np.zeros( (resolution1[1],(resolution1[0] + resolution2[0]),3), dtype = np.uint8)
     while(True):
-        retval,frame = camera.read()
-        if(not retval): continue
+        retval1,frame1 = camera1.read()
+        retval2,frame2 = camera2.read()
+        if(not retval1 or not retval2): continue
+        frame[:,:resolution1[0]] = frame1
+        frame[:,resolution1[0]:] = frame2
+
+        # Vision and Pathing
         objects = getObjects(frame)
         target = getScreenTarget(objects)
         driveToTarget(target)
         record.write(frame)
-        cv.waitKey(1)
+        if cv.waitKey(25) & 0xFF == ord(' '):
+            record.release()
+            break
