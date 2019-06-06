@@ -52,7 +52,7 @@ if __name__ ==  "__main__":
     clear()
     time.sleep(5)
     device = 0
-    recorder = cv.VideoWriter("whee.avi")
+    record = cv.VideoWriter("whee.avi",cv.VideoWriter_fourcc(*'XVID'),25,(640,480))
     camera = cv.VideoCapture(device)
     while(True):
         retval,frame = camera.read()
@@ -60,5 +60,5 @@ if __name__ ==  "__main__":
         objects = getObjects(frame)
         target = getScreenTarget(objects)
         driveToTarget(target)
-        recorder.write(frame)
+        record.write(frame)
         cv.waitKey(1)
