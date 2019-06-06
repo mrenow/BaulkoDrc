@@ -7,23 +7,41 @@ import numpy as np
 
 resolution = (1280//2,480)
 
+
+def takeX(elem):
+    return elem[1][0]
+
+
 #gets x co ordinate of screen target
 def getScreenTarget(objects:dict):
-    allobjects = []
-
+    #allobjects = []
+    # Dealing with cases where one line isn't being seen by the cameras
     if(not objects["blueline"]):
-        allobjects.append(0)
+        #allobjects.append(0)
+        objects.update(leftwall = 0)
     if(not objects["yellowline"]):
-        allobjects.append(resolution[0])
+        #allobjects.append(resolution[0])
+        objects.update(rightwall = resolution[0])
 
-    allobjects = sorted(sum(([i[0] for i in o] for o in objects.values() if o), allobjects))
+    #allobjects = sorted(sum(([i[0] for i in o] for o in objects.values() if o), allobjects))
+    newobjects = sum([[(key,el) for el in objects[key]] for key in objects.keys()], [])
+    newobjects.sort(key=takeX)
+
     # gap, location
     maxgap = (0,0)
-    print("bounds: ",allobjects)
-    for o1,o2 in zip(allobjects[1:],allobjects[:-1]):
-        gap = o1-o2
-        if(gap > maxgap[0]-maxgap[1]):
-            maxgap = (o1,o2)
+    print("bounds: ", objects)
+
+    #s2 will be larger than t2
+    for (s1, s2), (t1, t2) in zip(newobjects[1:], newobjects[:-1]):
+        viable = True
+        gap = s2[0] - t2[0]
+
+        if (s1 == "yellowline" and t1 == "yellowline") or (s1 == "blueline" and t1 == "blueline"):
+            viable = False
+
+        if(gap > maxgap[0]-maxgap[1] and viable == True):
+            maxgap = (s2, t2)
+
     print("maxgap: ", maxgap)
     return (maxgap[0]+maxgap[1])/2
 
