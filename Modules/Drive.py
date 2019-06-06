@@ -1,5 +1,5 @@
-from BaulkoDRC.BaulkoDrc.Modules.Objects import getObjects
-from BaulkoDRC.BaulkoDrc.Modules.Maestro import *
+from BaulkoDrc.Modules.Objects import getObjects
+from BaulkoDrc.Modules.Maestro import *
 import cv2 as cv
 import numpy as np
 
